@@ -4,12 +4,11 @@ const commonHelper = require('../helper/common')
 const categoryController = {
     getAllCatogories: async(req, res) => {
         try {
-            if(req.query.sortby !== undefined && req.query.sort !== undefined){
                 const page = Number(req.query.page) || 1
                 const limit = Number(req.query.limit) || 5
                 const offset = (page - 1) * limit
-                const sortby = req.query.sortby || name
-                const sort = req.query.sort.toUpperCase() || "ASC"
+                const sortby = req.query.sortby || "name"
+                const sort = req.query.sort?.toUpperCase() || "ASC"
                 const result = await categoryModel.getAllCategories({limit, offset, sort, sortby})
                 const {rows: [count]} = await categoryModel.countCategory()
                 const totalData = parseInt(count.count)
@@ -21,13 +20,11 @@ const categoryController = {
                     totalPage: totalPage
                 }
                 commonHelper.response(res, result.rows, 200, "get data success", pagination)
-            } else if(req.query.search !== undefined){
-                const input = req.query.search
-                const result = await categoryModel.searchingCategories({input})
-                commonHelper.response(res, result.rows, 200, "get data success")
-            } else{
-                res.json("Must be input sortby=? & sort=asc|desc & page=? & limit=? ")
-            }
+                if(req.query.search !== undefined){
+                    const input = req.query.search
+                    const result = await categoryModel.searchingCategories({input})
+                    commonHelper.response(res, result.rows, 200, "get data success")
+                }
         } catch (error) {
             console.log(error);
         }

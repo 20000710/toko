@@ -6,11 +6,7 @@ const cors = require('cors');
 const app = express();
 const helmet = require('helmet');
 const xss = require('xss-clean');
-const categoryRouter = require('./src/routes/category');
-const productRouter = require('./src/routes/product');
-const customerRouter = require('./src/routes/customer');
-const sellerRouter = require('./src/routes/seller');
-const transactionRouter = require('./src/routes/transactions');
+const mainRouter = require('./src/routes/index')
 
 
 app.use(express.json());
@@ -19,11 +15,8 @@ app.use(cors());
 app.use(helmet());
 app.use(xss())
 
-app.use('/category', categoryRouter)
-app.use('/product', productRouter)
-app.use('/customer', customerRouter)
-app.use('/seller', sellerRouter)
-app.use('/transactions', transactionRouter)
+app.use('/api/v1', mainRouter)
+app.use('/img', express.static('./upload'))
 
 app.all('*', (req, res, next) => {
     next(new createError.NotFound())

@@ -1,12 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const productController = require('../controller/product');
+const upload = require('../middlewares/upload');
+const {getAllProduct, getProduct, insertProduct, updateProduct, deleteProduct} = require('../controller/product');
+const {protect} = require('../middlewares/auth')
+const {hitCacheProductDetail, clearCacheProductDetail} = require('../middlewares/redis')
 
-router.get('/', productController.getAllProduct);
-router.get('/:id', productController.getProduct);
-router.post('/', productController.insertProduct);
-router.put('/:id', productController.updateProduct);
-router.delete('/:id', productController.deleteProduct);
+router.get('/', protect, getAllProduct);
+router.get('/:id', protect, hitCacheProductDetail, getProduct);
+router.post('/', protect, upload.single('photo'), insertProduct);
+router.put('/:id', protect, clearCacheProductDetail, upload.single('photo'), updateProduct);
+router.delete('/:id', protect, clearCacheProductDetail, deleteProduct);
 
 module.exports = router
 

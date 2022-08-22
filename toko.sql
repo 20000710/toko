@@ -3,11 +3,13 @@ CREATE TABLE product(
 id_product SERIAL PRIMARY KEY,
 name VARCHAR(120) NOT NULL,
 brand VARCHAR(120) NOT NULL,
-category_id integer NOT NULL,
+category_id VARCHAR(100) NOT NULL,
 size TEXT NOT NULL DEFAULT 'S' CHECK(size IN('S','M','L','XL')),
 color TEXT NOT NULL DEFAULT 'white' CHECK(color IN('white', 'red', 'blue')),
 price integer NOT NULL,
-seller_id integer NOT NULL
+seller_id VARCHAR(100) NOT NULL,
+photo VARCHAR(120) NOT NULL,
+description VARCHAR(120) NOT NULL
 ADD CONSTRAINT fk_category_id FOREIGN KEY (category_id) REFERENCES category (id_category)
 ADD CONSTRAINT fk_seller_id FOREIGN KEY (seller_id) REFERENCES seller (id_seller)
 );
@@ -54,3 +56,12 @@ date_of_birth DATE NOT NULL,
 city TEXT NOT NULL,
 address TEXT NOT NULL,
 postal_code integer NOT NULL);
+
+-- create users table --
+CREATE TABLE users(
+id VARCHAR(120) PRIMARY KEY,
+email VARCHAR(50) NOT NULL,
+password TEXT NOT NULL,
+fullname VARCHAR(100) NOT NULL,
+role VARCHAR(120) NOT NULL
+)
