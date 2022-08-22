@@ -41,7 +41,7 @@ const productController = {
         .catch(err => res.send(err))
     },
     insertProduct: async(req, res) => {
-        console.log('req: ', req.file.filename)
+        console.log('req: ', req.body)
         const PORT = process.env.PORT
         const DB_HOST = process.env.DB_HOST
         const photo = req.file.filename;
@@ -61,9 +61,9 @@ const productController = {
             photo: `http://${DB_HOST}:${PORT}/img/${photo}`,
             description
         }
-        insertProduct(data)
-        .then(result => commonHelper.response(res, result.rows, 201, "Product Created"))
-        .catch(err => res.send(err))
+        console.log('data: ', data)
+        const result = insertProduct(data)
+        commonHelper.response(res, result, 201, "Product Created")
     },
     updateProduct: async (req, res, next) => {
         try {
