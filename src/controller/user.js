@@ -9,7 +9,7 @@ const authHelper = require('../helper/auth');
 const userController = {
     register: async(req,res, next) => {
         try {
-            const {email, password, fullname} = req.body;
+            const {email, password, fullname, role} = req.body;
             const {rowCount} = await findEmail(email)
             // const salt = bcrypt.genSaltSync(10);
             const passwordHash = bcrypt.hashSync(password);
@@ -21,7 +21,7 @@ const userController = {
                 email,
                 passwordHash,
                 fullname,
-                role: 'user'
+                role
             }
             create(data)
             .then(result => commonHelper.response(res, result.rows, 201, "Category Created"))
@@ -32,6 +32,7 @@ const userController = {
         }
     },
     login: async(req,res) => {
+        console.log('res: ', res)
         try {
             const {email, password} = req.body;
             const {rows: [user]} = await findEmail(email)

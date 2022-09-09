@@ -1,5 +1,18 @@
 const Pool = require('../config/db')
 
+const findEmail = (email) => {
+    return new Promise ((resolve, reject) => {
+        Pool.query(`SELECT * FROM seller WHERE email='${email}'`,
+        (err, result) => {
+            if(!err){
+                resolve(result);
+            } else{
+                reject(err)
+            }
+        })    
+    })
+}
+
 const getAllSellers = ({limit, offset, sort, sortby}) => {
     return Pool.query(`SELECT * FROM seller ORDER BY ${sortby} ${sort} LIMIT ${limit} OFFSET ${offset}`);
 }
@@ -8,12 +21,25 @@ const getSeller = (id) => {
     return Pool.query(`SELECT * FROM seller WHERE id_seller=${id}`);
 }
 
-const insertSeller = (username, password, name, email, phone, address) => {
-    return Pool.query(
-        `INSERT INTO seller(username, password, name, email, phone, address) 
-        VALUES(
-            '${username}', crypt('${password}', 'bf'), '${name}', '${email}', ${phone},  '${address}')`
-    );
+const createSeller = (data) => {
+    console.log('data: ', data)
+    const { id, name, email, phone, store_name, passwordHash, role } = data
+    return new Promise ((resolve, reject) => {
+        Pool.query(`INSERT INTO seller(id, name, email, phone, store_name, password, role) 
+                    VALUES('${id}', '${name}', '${email}', '${phone}', '${store_name}' '${passwordHash}', '${role}')`, 
+        (err, result) => {
+            console.log('err: ', err)
+            if(!err){
+                resolve(result);
+            } else {
+                reject(err)
+            }
+        })
+    })
+
+    // return Pool.query(
+    //     `INSERT INTO seller(name, email, phone, store_name, password, role) 
+    //     VALUES('${name}', '${email}', '${phone}', '${store_name}' '${passwordHash}', '${role}')`);
 }
 
 const updateSeller = (id, username, password, name, email, phone, address) => {
@@ -35,9 +61,10 @@ const countSeller = () => {
 
 
 module.exports = {
+    findEmail,
     getAllSellers,
     getSeller,
-    insertSeller,
+    createSeller,
     updateSeller,
     deleteSeller,
     countSeller,
