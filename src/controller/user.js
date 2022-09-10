@@ -23,6 +23,7 @@ const userController = {
                 fullname,
                 role
             }
+            console.log('data: ', data)
             create(data)
             .then(result => commonHelper.response(res, result.rows, 201, "Category Created"))
             .catch(err => res.send(err))    

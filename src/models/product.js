@@ -1,11 +1,12 @@
 const Pool = require('../config/db')
 
-const getAllProducts = ({limit, offset, sort, sortby}) => {
-    return Pool.query(`SELECT * FROM product ORDER BY ${sortby} ${sort} LIMIT ${limit} OFFSET ${offset}`);
-}
-
-const searchingProducts = ({input}) => {
-    return Pool.query(`SELECT * FROM product WHERE brand LIKE '${input}%' OR name LIKE '${input}%'`)
+const getAllProducts = ({input, limit, offset, sort, sortby}) => {
+    return Pool.query(`SELECT * FROM product WHERE 
+                        name LIKE '%${input}%' OR
+                        brand LIKE '%${input}%' OR
+                        size LIKE '%${input}%'
+                        ORDER BY ${sortby} ${sort} LIMIT ${limit} OFFSET ${offset}
+                    `);
 }
 
 const getProduct = (id) => {
@@ -46,7 +47,6 @@ const findId =(id)=>{
 
 module.exports = {
     getAllProducts,
-    searchingProducts,
     getProduct,
     insertProduct,
     updateProduct,

@@ -1,17 +1,19 @@
-const {getAllProducts, countProduct, searchingProducts, getProduct, insertProduct, updateProduct, deleteProduct, findId} = require('../models/product')
+const {getAllProducts, countProduct, getProduct, insertProduct, updateProduct, deleteProduct, findId} = require('../models/product')
 const commonHelper = require('../helper/common')
 const createError = require('http-errors')
 const client = require('../config/redis')
 
 const productController = {
     getAllProduct: async(req, res) => {
-        try {
+        console.log('req: ', req.query)
+        try {   
+                const input = req.query.search || ""
                 const page = Number(req.query.page) || 1
                 const limit = Number(req.query.limit) || 5
                 const offset = (page - 1) * limit
                 const sortby = req.query.sortby || "name"
                 const sort = req.query.sort?.toUpperCase() || "ASC"
-                const result = await getAllProducts({limit, offset, sort, sortby})
+                const result = await getAllProducts({input, limit, offset, sort, sortby})
                 const {rows: [count]} = await countProduct()
                 const totalData = parseInt(count.count)
                 const totalPage =  Math.ceil(totalData / limit)
@@ -22,11 +24,6 @@ const productController = {
                     totalPage: totalPage
                 }
                 commonHelper.response(res, result.rows, 200, "get data success", pagination)
-                if(req.query.search !== undefined){
-                    const input = req.query.search
-                    const result = await searchingProducts({input})
-                    commonHelper.response(res, result.rows, 200, "get data success")
-                }
         } catch (error) {
             console.log(error);
         }

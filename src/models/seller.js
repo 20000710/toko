@@ -26,7 +26,7 @@ const createSeller = (data) => {
     const { id, name, email, phone, store_name, passwordHash, role } = data
     return new Promise ((resolve, reject) => {
         Pool.query(`INSERT INTO seller(id, name, email, phone, store_name, password, role) 
-                    VALUES('${id}', '${name}', '${email}', '${phone}', '${store_name}' '${passwordHash}', '${role}')`, 
+                    VALUES('${id}', '${name}', '${email}', '${phone}', '${store_name}', '${passwordHash}', '${role}')`, 
         (err, result) => {
             console.log('err: ', err)
             if(!err){

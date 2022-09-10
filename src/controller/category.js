@@ -3,6 +3,7 @@ const commonHelper = require('../helper/common')
 
 const categoryController = {
     getAllCatogories: async(req, res) => {
+        console.log('req: ', req)
         try {
                 const page = Number(req.query.page) || 1
                 const limit = Number(req.query.limit) || 5
@@ -23,6 +24,7 @@ const categoryController = {
                 if(req.query.search !== undefined){
                     const input = req.query.search
                     const result = await categoryModel.searchingCategories({input})
+                    console.log('result: ', result)
                     commonHelper.response(res, result.rows, 200, "get data success")
                 }
         } catch (error) {
