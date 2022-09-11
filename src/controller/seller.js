@@ -1,8 +1,9 @@
-const {getAllSellers, countSeller, getSeller, findEmail, createSeller, updateSeller, deleteSeller} = require('../models/seller')
+const {getAllSellers, countSeller, findEmail, createSeller, updateSeller, deleteSeller} = require('../models/seller')
 const commonHelper = require('../helper/common')
 const { v4: uuidv4 } = require('uuid');
 const createError = require('http-errors');
 const bcrypt = require('bcryptjs');
+const authHelper = require('../helper/auth');
 
 const sellerController = {
     getAllCSellers: async(req, res) => {
@@ -31,13 +32,40 @@ const sellerController = {
             console.log(error);
         }
     },
-    getSeller: (req, res) => {
-        const id = Number(req.params.id)
-        getSeller(id)
-        .then(result => commonHelper.response(res, result.rows, 200, "get data success"))
-        .catch(err => res.send(err))
+    login: async(req,res) => {
+        console.log('res: ', res)
+        try {
+            const {email, password} = req.body;
+            const {rows: [user]} = await findEmail(email)
+            if(!user){
+                return commonHelper.response(res, null, 403, "Email is invalid")
+            }
+            const isValidPassword = bcrypt.compareSync(password, user.password)
+
+            if(!isValidPassword){
+                return commonHelper.response(res, null, 403, "Password is invalid")
+            }
+            delete user.password
+            const payload = {
+                email: user.email,
+                role: user.role
+            }
+            user.token = authHelper.generateToken(payload)
+            user.refreshToken = authHelper.generateRefershToken(payload)
+
+            commonHelper.response(res, user, 201, 'login is successful')
+        } catch (error) {
+            console.log(error)            
+        }
     },
-    insertSeller: async(req, res, next) => {
+    profile: async(req, res) => {
+        console.log('request: ', req.payload)
+        const email = req.payload.email
+        const {rows: [user]} = await findEmail(email)
+        delete user.password
+        commonHelper.response(res, user, 200, 'success get profile')
+    },
+    registerSeller: async(req, res, next) => {
         try{
             const { name, email, phone, store_name, password, role } = req.body;
             const passwordHash = bcrypt.hashSync(password);
