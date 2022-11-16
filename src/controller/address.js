@@ -1,29 +1,23 @@
-const {
-    getAllProducts,
-    countProduct,
-    getDetailProduct,
-    insertProduct,
-    updateProduct,
-    deleteProduct
-} = require('../models/product')
-const { v4: uuidv4 } = require('uuid');
+const addressModel = require('../models/address')
 const { success, failed } = require('../helper/common')
+const { v4: uuidv4 } = require('uuid');
 
-const productController = {
-    getAllProduct: async (req, res) => {
+const categoryController = {
+    getAllAddress: async (req, res) => {
+        console.log('req: ', req)
         try {
             const { search, page, limit, sort, mode } = req.query;
             const searchQuery = search || '';
             const pageValue = page ? Number(page) : 1;
             const limitValue = limit ? Number(limit) : 5;
             const offsetValue = (pageValue - 1) * limitValue;
-            const sortQuery = sort ? sort : 'name';
+            const sortQuery = sort ? sort : 'id_address';
             const modeQuery = mode ? mode : 'ASC';
             if (typeof Number(page) == 'number' && typeof Number(limit) == 'number') {
-                const allData = await countProduct()
+                const allData = await addressModel.countAddress()
                 console.log("allData: ", allData)
                 const totalData = allData.rows[0].count;
-                const result = await getAllProducts(
+                const result = await addressModel.getAllAddress(
                     searchQuery,
                     offsetValue,
                     limitValue,
@@ -42,7 +36,7 @@ const productController = {
                         success(res, {
                             code: 200,
                             status: 'success',
-                            message: 'Success get all products',
+                            message: 'Success get all addresses',
                             data: result.rows,
                             pagination,
                         });
@@ -50,7 +44,7 @@ const productController = {
                         failed(res, {
                             code: 500,
                             status: 'error',
-                            message: `product with keyword ${search} not found`,
+                            message: `addresses with keyword ${search} not found`,
                             error: [],
                         });
                     }
@@ -63,7 +57,7 @@ const productController = {
                     success(res, {
                         code: 200,
                         status: 'success',
-                        message: `Success get all products`,
+                        message: `Success get all address`,
                         data: result.rows,
                         pagination,
                     });
@@ -77,7 +71,6 @@ const productController = {
                 });
             }
         } catch (error) {
-            console.log('error: ', error);
             failed(res, {
                 code: 500,
                 status: 'error',
@@ -86,22 +79,22 @@ const productController = {
             });
         }
     },
-    getDetailProduct: async (req, res) => {
+    getDetailAddress: async (req, res) => {
         const { id } = req.params
         try {
-            const result = await getDetailProduct(id);
+            const result = await addressModel.getDetailAddress(id);
             if (result.rowCount > 0) {
                 success(res, {
                     code: 200,
                     status: 'success',
-                    message: 'Success get product by id',
+                    message: 'Success get address by id',
                     data: result.rows[0],
                 });
             } else {
                 failed(res, {
                     code: 404,
                     status: 'error',
-                    message: `product with id ${id} not found`,
+                    message: `address with id ${id} not found`,
                     error: [],
                 });
             }
@@ -114,31 +107,44 @@ const productController = {
             });
         }
     },
-    insertProduct: async (req, res) => {
-        console.log('req: ', req.body)
+    insertAddress: async (req, res) => {
         try {
-            const photo = req.file.filename;
-            const { name, brand, category_id, size, color, price, quantity, seller_id, description } = req.body;
             const id = uuidv4();
+            const {
+                address,
+                address2,
+                address_label,
+                address_label2,
+                name_address,
+                name_address2,
+                phone_address,
+                phone_address2,
+                postal_code,
+                postal_code2,
+                city,
+                city2
+            } = req.body;
+
             const data = {
                 id,
-                name,
-                brand,
-                category_id,
-                size,
-                color,
-                price,
-                quantity,
-                seller_id,
-                photo,
-                description
+                address,
+                address2,
+                address_label,
+                address_label2,
+                name_address,
+                name_address2,
+                phone_address,
+                phone_address2,
+                postal_code,
+                postal_code2,
+                city,
+                city2
             }
-            console.log('data: ', data)
-            await insertProduct(data)
+            await addressModel.insertAddress(data);
             success(res, {
                 code: 200,
                 status: 'success',
-                message: 'new product has been created',
+                message: 'new address has been created',
                 data: data,
             });
         } catch (error) {
@@ -151,43 +157,60 @@ const productController = {
             });
         }
     },
-    updateProduct: async (req, res) => {
+    updateAddress: async (req, res) => {
         try {
-            const photo = req.file.filename
             const { id } = req.params
-            const { name, brand, category_id, size, color, price, quantity, seller_id, description } = req.body;
-            const productCheck = await getDetailProduct(id);
-
-            if (productCheck.rowCount > 0) {
+            console.log('id: ', id);
+            const { 
+                address,
+                address2,
+                address_label,
+                address_label2,
+                name_address,
+                name_address2,
+                phone_address,
+                phone_address2,
+                postal_code,
+                postal_code2,
+                city,
+                city2
+             } = req.body
+            const addressCheck = await addressModel.getDetailAddress(id);
+            console.log('addressCheck: ', addressCheck);
+            if (addressCheck.rowCount > 0) {
                 const data = {
                     id,
-                    name,
-                    brand,
-                    category_id,
-                    size,
-                    color,
-                    price,
-                    quantity,
-                    seller_id,
-                    photo,
-                    description
+                    address,
+                    address2,
+                    address_label,
+                    address_label2,
+                    name_address,
+                    name_address2,
+                    phone_address,
+                    phone_address2,
+                    postal_code,
+                    postal_code2,
+                    city,
+                    city2
                 }
-                await updateProduct(data)
+                await addressModel.updateAddress(data);
                 success(res, {
                     code: 200,
                     status: 'success',
-                    message: 'Success update product',
-                    data: productCheck.rows[0],
+                    message: 'Success update address',
+                    data: addressCheck.rows[0],
                 });
             } else {
                 failed(res, {
                     code: 404,
                     status: 'error',
-                    message: `product with id ${id} not found`,
+                    message: `address with id ${id} not found`,
                     error: [],
                 });
+                return;
             }
         } catch (error) {
+            console.log(error);
             failed(res, {
                 code: 500,
                 status: 'error',
@@ -196,16 +219,16 @@ const productController = {
             });
         }
     },
-    deleteProduct: async (req, res) => {
+    deleteAddress: async (req, res) => {
         try {
             const { id } = req.params;
-            const checkProduct = await getDetailProduct(id);
-            if (checkProduct.rowCount > 0) {
-                await deleteProduct(id);
+            const checkAddress = await addressModel.getDetailAddress(id);
+            if (checkAddress.rowCount > 0) {
+                await addressModel.deleteAddress(id);
                 success(res, {
                     code: 200,
                     status: 'success',
-                    message: `success deleted product with id ${id}`,
+                    message: `success deleted address with id ${id}`,
                     error: [],
                 });
                 return;
@@ -213,7 +236,7 @@ const productController = {
                 failed(res, {
                     code: 404,
                     status: 'error',
-                    message: `product with id ${id} is not found`,
+                    message: `address with id ${id} is not found`,
                     error: [],
                 });
                 return;
@@ -229,4 +252,4 @@ const productController = {
     }
 }
 
-module.exports = productController
+module.exports = categoryController

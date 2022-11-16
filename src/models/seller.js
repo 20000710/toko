@@ -1,58 +1,77 @@
 const Pool = require('../config/db')
 
-const findEmail = (email) => {
-    return new Promise ((resolve, reject) => {
-        Pool.query(`SELECT * FROM seller WHERE email='${email}'`,
-        (err, result) => {
-            if(!err){
-                resolve(result);
-            } else{
-                reject(err)
+const getAllSellers = (
+    searchQuery,
+    offsetValue,
+    limitValue,
+    sortQuery,
+    modeQuery) => {
+    return new Promise((resolve, reject) => {
+        Pool.query(`
+        SELECT * FROM seller WHERE LOWER(name) LIKE '%${searchQuery}%'
+        ORDER BY ${sortQuery} ${modeQuery} LIMIT ${limitValue} OFFSET ${offsetValue}`,
+            (err, res) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(res);
+                }
             }
-        })    
+        )
     })
 }
 
-const getAllSellers = ({limit, offset, sort, sortby}) => {
-    return Pool.query(`SELECT * FROM seller ORDER BY ${sortby} ${sort} LIMIT ${limit} OFFSET ${offset}`);
-}
-
-const getSeller = (id) => {
-    return Pool.query(`SELECT * FROM seller WHERE id_seller=${id}`);
-}
-
-const createSeller = (data) => {
-    console.log('data: ', data)
-    const { id, name, email, phone, store_name, passwordHash, role } = data
-    return new Promise ((resolve, reject) => {
-        Pool.query(`INSERT INTO seller(id, name, email, phone, store_name, password, role) 
-                    VALUES('${id}', '${name}', '${email}', '${phone}', '${store_name}', '${passwordHash}', '${role}')`, 
-        (err, result) => {
-            console.log('err: ', err)
-            if(!err){
-                resolve(result);
-            } else {
-                reject(err)
+const getDetailSeller = (id) => {
+    return new Promise((resolve, reject) => {
+        Pool.query(`SELECT * FROM seller WHERE id_seller='${id}'`,
+            (err, res) => {
+                if (!err) {
+                    resolve(res)
+                } else {
+                    reject(err)
+                }
             }
-        })
+        )
     })
-
-    // return Pool.query(
-    //     `INSERT INTO seller(name, email, phone, store_name, password, role) 
-    //     VALUES('${name}', '${email}', '${phone}', '${store_name}' '${passwordHash}', '${role}')`);
 }
 
-const updateSeller = (id, username, password, name, email, phone, address) => {
-    return Pool.query(
-        `UPDATE seller SET 
-            username='${username}', name='${name}', password=crypt('${password}', 'bf'), email='${email}', phone=${phone}, address='${address}' 
-        WHERE id_seller=${id}
-        `
-    );
+const updateSeller = (data) => {
+    return new Promise((resolve, reject) => {
+        const {
+            id, 
+            name, 
+            phone, 
+            store_name, 
+            address
+        } = data
+        Pool.query(
+            `UPDATE seller SET name='${name}', phone='${phone}', 
+        store_name='${store_name}', address='${address}' 
+        WHERE id_seller='${id}'
+        `,
+            (err, res) => {
+                if (!err) {
+                    resolve(res)
+                } else {
+                    reject(err)
+                }
+            }
+        )
+    })
 }
 
 const deleteSeller = (id) => {
-    return Pool.query(`DELETE FROM seller WHERE id_seller=${id}`);
+    return new Promise((resolve, reject) => {
+        Pool.query(`DELETE FROM seller WHERE id_seller='${id}'`,
+            (err, res) => {
+                if (!err) {
+                    resolve(res)
+                } else {
+                    reject(err)
+                }
+            }
+        )
+    })
 }
 
 const countSeller = () => {
@@ -61,10 +80,8 @@ const countSeller = () => {
 
 
 module.exports = {
-    findEmail,
     getAllSellers,
-    getSeller,
-    createSeller,
+    getDetailSeller,
     updateSeller,
     deleteSeller,
     countSeller,

@@ -27,7 +27,7 @@ password TEXT NOT NULL,
 name VARCHAR(120) NOT NULL,
 email VARCHAR(120) NOT NULL,
 phone integer,
-address TEXT
+role VARCHAR(120)
 );
 
 -- create transaction table --

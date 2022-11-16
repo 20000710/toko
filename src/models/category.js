@@ -1,27 +1,84 @@
 const Pool = require('../config/db')
 
-const getAllCategories = ({limit, offset, sort, sortby}) => {
-    return Pool.query(`SELECT * FROM category ORDER BY ${sortby} ${sort} LIMIT ${limit} OFFSET ${offset}`);
+const getAllCategories = (
+    searchQuery,
+    offsetValue,
+    limitValue,
+    sortQuery,
+    modeQuery) => {
+    return new Promise((resolve, reject) => {
+        Pool.query(`SELECT * FROM category WHERE LOWER(name) LIKE '%${searchQuery}%'
+    ORDER BY ${sortQuery} ${modeQuery} LIMIT ${limitValue} OFFSET ${offsetValue}`,
+            (err, res) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(res);
+                }
+            });
+    })
 }
 
-const searchingCategories = ({input}) => {
-    return Pool.query(`SELECT * FROM category WHERE name LIKE '${input}%'`)
+
+const getDetailCategory = (id) => {
+    return new Promise((resolve, reject) => {
+        Pool.query(`SELECT * FROM category WHERE id_category='${id}'`,
+        (err, res) => {
+            if (!err) {
+                resolve(res)
+            } else {
+                reject(err)
+            }
+        });
+    })
 }
 
-const getCategory = (id) => {
-    return Pool.query(`SELECT * FROM category WHERE id_category=${id}`);
+const insertCategory = (data) => {
+    return new Promise((resolve, reject) => {
+        const {
+            id,
+            name,
+            photo
+        } = data
+        Pool.query(`INSERT INTO category(id_category, name, photo) VALUES('${id}', '${name}', '${photo}')`,
+        (err, res) => {
+            if (!err) {
+                resolve(res)
+            } else {
+                reject(err)
+            }
+        })
+    })
 }
 
-const insertCategory = (name) => {
-    return Pool.query(`INSERT INTO category(name) VALUES('${name}')`);
-}
-
-const updateCategory = (id, name) => {
-    return Pool.query(`UPDATE category SET name='${name}' WHERE id_category=${id}`);
+const updateCategory = (data) => {
+    return new Promise((resolve, reject) => {
+        const {
+            id,
+            name
+        } = data
+        Pool.query(`UPDATE category SET name='${name}' WHERE id_category='${id}'`,
+        (err, res) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(res);
+            }
+        })
+    })
 }
 
 const deleteCategory = (id) => {
-    return Pool.query(`DELETE FROM category WHERE id_category=${id}`);
+    return new Promise((resolve, reject) => {
+        Pool.query(`DELETE FROM category WHERE id_category='${id}'`,
+        (err, res) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(res);
+            }
+        })
+    })
 }
 
 const countCategory = () => {
@@ -31,8 +88,7 @@ const countCategory = () => {
 
 module.exports = {
     getAllCategories,
-    searchingCategories,
-    getCategory,
+    getDetailCategory,
     insertCategory,
     updateCategory,
     deleteCategory,

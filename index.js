@@ -8,7 +8,6 @@ const helmet = require('helmet');
 const xss = require('xss-clean');
 const mainRouter = require('./src/routes/index')
 
-
 app.use(express.json());
 app.use(morgan('dev'));
 app.use(cors());
@@ -16,7 +15,7 @@ app.use(helmet());
 app.use(xss())
 
 app.use('/api/v1', mainRouter)
-app.use('/img', express.static('./upload'))
+app.use(express.static('upload'));
 
 app.all('*', (req, res, next) => {
     next(new createError.NotFound())

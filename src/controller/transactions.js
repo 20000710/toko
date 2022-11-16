@@ -1,57 +1,240 @@
 const transactionsModel = require('../models/transactions')
-const commonHelper = require('../helper/common')
+const { success, failed } = require('../helper/common');
+const { v4: uuidv4 } = require('uuid');
 
 const sellerController = {
-    getAlltransactions: async(req, res) => {
+    getAlltransactions: async (req, res) => {
         try {
-            if(req.query.sortby !== undefined && req.query.sort !== undefined){
-                const page = Number(req.query.page) || 1
-                const limit = Number(req.query.limit) || 5
-                const offset = (page - 1) * limit
-                const sortby = req.query.sortby
-                const sort = req.query.sort.toUpperCase() || "ASC"
-                const result = await transactionsModel.getAllTransactions({limit, offset, sort, sortby})
-                const {rows: [count]} = await transactionsModel.countTransactions()
-                const totalData = parseInt(count.count)
-                const totalPage =  Math.ceil(totalData / limit)
-                const pagination = {
-                    currentPage: page,
-                    limit: limit,
-                    totalData: totalData,
-                    totalPage: totalPage
+            const { search, page, limit, sort, mode } = req.query;
+            const searchQuery = search || '';
+            const pageValue = page ? Number(page) : 1;
+            const limitValue = limit ? Number(limit) : 5;
+            const offsetValue = (pageValue - 1) * limitValue;
+            const sortQuery = sort ? sort : 'id_transactions';
+            const modeQuery = mode ? mode : 'ASC';
+            if (typeof Number(page) == 'number' && typeof Number(limit) == 'number') {
+                const allData = await transactionsModel.countTransactions()
+                console.log("allData: ", allData)
+                const totalData = allData.rows[0].count;
+                const result = await transactionsModel.getAllTransactions(
+                    searchQuery,
+                    offsetValue,
+                    limitValue,
+                    sortQuery,
+                    modeQuery,
+                );
+                const dataPerPage =
+                    limitValue > result.rowCount ? result.rowCount : limitValue;
+                if (search) {
+                    if (result.rowCount > 0) {
+                        const pagination = {
+                            currentPage: pageValue,
+                            dataPerPage: dataPerPage,
+                            totalPage: Math.ceil(result.rowCount / limitValue),
+                        };
+                        success(res, {
+                            code: 200,
+                            status: 'success',
+                            message: 'Success get all transactions',
+                            data: result.rows,
+                            pagination,
+                        });
+                    } else {
+                        failed(res, {
+                            code: 500,
+                            status: 'error',
+                            message: `transaction with keyword ${search} not found`,
+                            error: [],
+                        });
+                    }
+                } else {
+                    const pagination = {
+                        currentPage: pageValue,
+                        dataPerPage: dataPerPage,
+                        totalPage: Math.ceil(totalData / limitValue),
+                    };
+                    success(res, {
+                        code: 200,
+                        status: 'success',
+                        message: `Success get all transactions`,
+                        data: result.rows,
+                        pagination,
+                    });
                 }
-                commonHelper.response(res, result.rows, 200, "get data success", pagination)
-            }else{
-                res.json("Must be input sortby=? & sort=asc|desc & page=? & limit=? ")
+            } else {
+                failed(res, {
+                    code: 400,
+                    status: 'error',
+                    message: 'limit and page value must be number',
+                    error: [],
+                });
             }
         } catch (error) {
             console.log(error);
+            failed(res, {
+                code: 500,
+                status: 'error',
+                message: error.message,
+                error: [],
+            });
         }
     },
-    getTransactions: (req, res) => {
-        const id = Number(req.params.id)
-        transactionsModel.getTransactions(id)
-        .then(result => commonHelper.response(res, result.rows, 200, "get data success"))
-        .catch(err => res.send(err))
+    getDetailTransactions: async (req, res) => {
+        const { id }= req.params
+        try {
+            const result = await transactionsModel.getDetailTransactions(id);
+            if (result.rowCount > 0) {
+                success(res, {
+                    code: 200,
+                    status: 'success',
+                    message: 'Success get transaction by id',
+                    data: result.rows[0],
+                });
+            } else {
+                failed(res, {
+                    code: 404,
+                    status: 'error',
+                    message: `transaction with id ${id} not found`,
+                    error: [],
+                });
+            }
+        } catch (error) {
+            failed(res, {
+                code: 500,
+                status: 'error',
+                message: error.message,
+                error: [],
+            });
+        }
     },
-    insertTransactions: (req, res) => {
-        const { product_id, quantity, total_amount, payment_type, payment_status, shipped_date, transaction_status, customer_id, seller_id } = req.body;
-        transactionsModel.insertTransactions(product_id, quantity, total_amount, payment_type, payment_status, shipped_date, transaction_status, customer_id, seller_id)
-        .then(result => commonHelper.response(res, result.rows, 201, "Transactions Created"))
-        .catch(err => res.send(err))
+    insertTransactions: async (req, res) => {
+        try {
+            const {
+                product_id,
+                quantity,
+                total_amount,
+                payment_type,
+                payment_status,
+                shipped_date,
+                transaction_status,
+                customer_id,
+                seller_id
+            } = req.body;
+            const id = uuidv4();
+            const data = {
+                id,
+                product_id,
+                quantity,
+                total_amount,
+                payment_type,
+                payment_status,
+                shipped_date,
+                transaction_status,
+                customer_id,
+                seller_id
+            }
+            console.log('data: ', data)
+            await transactionsModel.insertTransactions(data)
+            success(res, {
+                code: 200,
+                status: 'success',
+                message: 'new transaction has been created',
+                data: data,
+            });
+        } catch (error) {
+            console.log(error);
+            failed(res, {
+                code: 500,
+                status: 'error',
+                message: error,
+                error: [],
+            });
+        }
     },
-    updateTransactions: (req, res) => {
-        const id = Number(req.params.id)
-        const { product_id, quantity, total_amount, payment_type, payment_status, shipped_date, transaction_status, customer_id, seller_id } = req.body;
-        transactionsModel.updateTransactions(id, product_id, quantity, total_amount, payment_type, payment_status, shipped_date, transaction_status, customer_id, seller_id)
-        .then(result => commonHelper.response(res, result.rows, 200, "Transactions Updated"))
-        .catch(err => res.send(err))
+    updateTransactions: async (req, res) => {
+        try {
+            const { id } = req.params
+            const {
+                product_id,
+                quantity,
+                total_amount,
+                payment_type,
+                payment_status,
+                shipped_date,
+                transaction_status,
+                customer_id,
+                seller_id
+            } = req.body;
+            const transactionCheck = await transactionsModel.getDetailTransactions(id);
+
+            if (transactionCheck.rowCount > 0) {
+                const data = {
+                    id,
+                    product_id,
+                    quantity,
+                    total_amount,
+                    payment_type,
+                    payment_status,
+                    shipped_date,
+                    transaction_status,
+                    customer_id,
+                    seller_id
+                }
+                await transactionsModel.updateTransactions(data)
+                success(res, {
+                    code: 200,
+                    status: 'success',
+                    message: 'Success update transaction',
+                    data: transactionCheck.rows[0],
+                });
+            } else {
+                failed(res, {
+                    code: 404,
+                    status: 'error',
+                    message: `transaction with id ${id} not found`,
+                    error: [],
+                });
+            }
+        } catch (error) {
+            failed(res, {
+                code: 500,
+                status: 'error',
+                message: error.message,
+                error: [],
+            });
+        }
+
     },
-    deleteTransactions: (req, res) => {
-        const id = Number(req.params.id)
-        transactionsModel.deleteTransactions(id)
-        .then(result => commonHelper.response(res, result.rows, 200, "Transactions deleted"))
-        .catch(err => res.send(err))
+    deleteTransactions: async(req, res) => {
+        try {
+            const { id } = req.params;
+            const checkTransaction = await transactionsModel.getDetailTransactions(id);
+            if (checkTransaction.rowCount > 0) {
+                await transactionsModel.deleteTransactions(id);
+                success(res, {
+                    code: 200,
+                    status: 'success',
+                    message: `success deleted transaction with id ${id}`,
+                    error: [],
+                });
+                return;
+            } else {
+                failed(res, {
+                    code: 404,
+                    status: 'error',
+                    message: `transaction with id ${id} is not found`,
+                    error: [],
+                });
+                return;
+            }
+        } catch (error) {
+            failed(res, {
+                code: 500,
+                status: 'error',
+                message: error.message,
+                error: [],
+            });
+        }
     }
 }
 

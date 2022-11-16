@@ -1,108 +1,169 @@
-const {getAllSellers, countSeller, findEmail, createSeller, updateSeller, deleteSeller} = require('../models/seller')
-const commonHelper = require('../helper/common')
-const { v4: uuidv4 } = require('uuid');
-const createError = require('http-errors');
-const bcrypt = require('bcryptjs');
-const authHelper = require('../helper/auth');
+const { getAllSellers, countSeller, updateSeller, deleteSeller, getDetailSeller } = require('../models/seller')
+const { success, failed } = require('../helper/common');
 
 const sellerController = {
-    getAllCSellers: async(req, res) => {
+    getAllSellers: async (req, res) => {
         try {
-            if(req.query.sortby !== undefined && req.query.sort !== undefined){
-                const page = Number(req.query.page) || 1
-                const limit = Number(req.query.limit) || 5
-                const offset = (page - 1) * limit
-                const sortby = req.query.sortby || name
-                const sort = req.query.sort.toUpperCase() || "ASC"
-                const result = await getAllSellers({limit, offset, sort, sortby})
-                const {rows: [count]} = await countSeller()
-                const totalData = parseInt(count.count)
-                const totalPage =  Math.ceil(totalData / limit)
-                const pagination = {
-                    currentPage: page,
-                    limit: limit,
-                    totalData: totalData,
-                    totalPage: totalPage
+            const { search, page, limit, sort, mode } = req.query;
+            const searchQuery = search || '';
+            const pageValue = page ? Number(page) : 1;
+            const limitValue = limit ? Number(limit) : 5;
+            const offsetValue = (pageValue - 1) * limitValue;
+            const sortQuery = sort ? sort : 'name';
+            const modeQuery = mode ? mode : 'ASC';
+            if (typeof Number(page) == 'number' && typeof Number(limit) == 'number') {
+                const allData = await countSeller()
+                console.log("allData: ", allData)
+                const totalData = allData.rows[0].count;
+                const result = await getAllSellers(
+                    searchQuery,
+                    offsetValue,
+                    limitValue,
+                    sortQuery,
+                    modeQuery,
+                );
+                const dataPerPage =
+                    limitValue > result.rowCount ? result.rowCount : limitValue;
+                if (search) {
+                    if (result.rowCount > 0) {
+                        const pagination = {
+                            currentPage: pageValue,
+                            dataPerPage: dataPerPage,
+                            totalPage: Math.ceil(result.rowCount / limitValue),
+                        };
+                        success(res, {
+                            code: 200,
+                            status: 'success',
+                            message: 'Success get all seller',
+                            data: result.rows,
+                            pagination,
+                        });
+                    } else {
+                        failed(res, {
+                            code: 500,
+                            status: 'error',
+                            message: `seller with keyword ${search} not found`,
+                            error: [],
+                        });
+                    }
+                } else {
+                    const pagination = {
+                        currentPage: pageValue,
+                        dataPerPage: dataPerPage,
+                        totalPage: Math.ceil(totalData / limitValue),
+                    };
+                    success(res, {
+                        code: 200,
+                        status: 'success',
+                        message: `Success get all sellers`,
+                        data: result.rows,
+                        pagination,
+                    });
                 }
-                commonHelper.response(res, result.rows, 200, "get data success", pagination)
-            }else{
-                res.json("Must be input sortby=? & sort=asc|desc & page=? & limit=? ")
+            } else {
+                failed(res, {
+                    code: 400,
+                    status: 'error',
+                    message: 'limit and page value must be number',
+                    error: [],
+                });
             }
         } catch (error) {
-            console.log(error);
+            failed(res, {
+                code: 500,
+                status: 'error',
+                message: error.message,
+                error: [],
+            });
         }
     },
-    login: async(req,res) => {
-        console.log('res: ', res)
+    getDetailSeller: async (req, res) => {
+        const { id } = req.params
         try {
-            const {email, password} = req.body;
-            const {rows: [user]} = await findEmail(email)
-            if(!user){
-                return commonHelper.response(res, null, 403, "Email is invalid")
+            const result = await getDetailSeller(id);
+            if (result.rowCount > 0) {
+                success(res, {
+                    code: 200,
+                    status: 'success',
+                    message: 'Success get seller by id',
+                    data: result.rows[0],
+                });
+            } else {
+                failed(res, {
+                    code: 404,
+                    status: 'error',
+                    message: `seller with id ${id} not found`,
+                    error: [],
+                });
             }
-            const isValidPassword = bcrypt.compareSync(password, user.password)
-
-            if(!isValidPassword){
-                return commonHelper.response(res, null, 403, "Password is invalid")
-            }
-            delete user.password
-            const payload = {
-                email: user.email,
-                role: user.role
-            }
-            user.token = authHelper.generateToken(payload)
-            user.refreshToken = authHelper.generateRefershToken(payload)
-
-            commonHelper.response(res, user, 201, 'login is successful')
         } catch (error) {
-            console.log(error)            
+            failed(res, {
+                code: 500,
+                status: 'error',
+                message: error.message,
+                error: [],
+            });
         }
     },
-    profile: async(req, res) => {
-        console.log('request: ', req.payload)
-        const email = req.payload.email
-        const {rows: [user]} = await findEmail(email)
-        delete user.password
-        commonHelper.response(res, user, 200, 'success get profile')
-    },
-    registerSeller: async(req, res, next) => {
-        try{
-            const { name, email, phone, store_name, password, role } = req.body;
-            const passwordHash = bcrypt.hashSync(password);
-            const {rowCount} = await findEmail(email)
-            if(rowCount){
-                return next(createError(403, "Email is already used"))
-            }
+    updateSeller: async (req, res) => {
+        const id = req.params.id
+        const { name, phone, store_name, address } = req.body;
+        const productCheck = await getDetailSeller(id);
+
+        if (productCheck.rowCount > 0) {
             const data = {
-                id: uuidv4(),
+                id,
                 name,
-                email,
                 phone,
                 store_name,
-                passwordHash,
-                role,
+                address
             }
-            // console.log('data: ', data)
-            console.log('res: ', res)
-            createSeller(data)
-            .then(result => commonHelper.response(res, result.rows, 201, "Seller Created"))
-            .catch(err => res.send(err))
-        } catch (error){
-            console.log(error)
+            await updateSeller(data)
+            success(res, {
+                code: 200,
+                status: 'success',
+                message: 'Success update seller',
+                data: productCheck.rows[0],
+            });
+        } else {
+            failed(res, {
+                code: 404,
+                status: 'error',
+                message: `seller with id ${id} not found`,
+                error: [],
+            });
         }
     },
-    updateSeller: (req, res) => {
-        const id = Number(req.params.id)
-        const { username, password, name, email, phone, address } = req.body;
-        updateSeller(id, username, password, name, email, phone, address)
-        .then(result => commonHelper.response(res, result.rows, 200, "Seller Updated"))
-        .catch(err => res.send(err))
-    },
-    deleteSeller: (req, res) => {
-        const id = Number(req.params.id)
-        deleteSeller(id)
-        .then(result => commonHelper.response(res, result.rows, 200, "Seller deleted"))
-        .catch(err => res.send(err))
+    deleteSeller: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const checkSeller = await getDetailSeller(id);
+            if (checkSeller.rowCount > 0) {
+                await deleteSeller(id);
+                success(res, {
+                    code: 200,
+                    status: 'success',
+                    message: `success deleted seller with id ${id}`,
+                    error: [],
+                });
+                return;
+            } else {
+                failed(res, {
+                    code: 404,
+                    status: 'error',
+                    message: `seller with id ${id} is not found`,
+                    error: [],
+                });
+                return;
+            }
+        } catch (error) {
+            failed(res, {
+                code: 500,
+                status: 'error',
+                message: error.message,
+                error: [],
+            });
+        }
     }
 }
 
