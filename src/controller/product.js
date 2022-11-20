@@ -7,7 +7,9 @@ const {
     deleteProduct
 } = require('../models/product')
 const { v4: uuidv4 } = require('uuid');
-const { success, failed } = require('../helper/common')
+const { success, failed } = require('../helper/common');
+const { log } = require('console');
+const cloudinary = require('../middlewares/cloudinary');
 
 const productController = {
     getAllProduct: async (req, res) => {
@@ -115,9 +117,12 @@ const productController = {
         }
     },
     insertProduct: async (req, res) => {
-        console.log('req: ', req.body)
         try {
-            const photo = req.file.filename;
+            
+            log('file: ', req.file)
+            const result = await cloudinary.uploader.upload(req.file.path)
+            const photo = result.secure_url;
+            const cloudinary_id = result.public_id
             const { name, brand, category_id, size, color, price, quantity, seller_id, description } = req.body;
             const id = uuidv4();
             const data = {
@@ -131,8 +136,10 @@ const productController = {
                 quantity,
                 seller_id,
                 photo,
-                description
+                description,
+                cloudinary_id
             }
+            console.log('photo: ', photo);
             console.log('data: ', data)
             await insertProduct(data)
             success(res, {
@@ -153,12 +160,16 @@ const productController = {
     },
     updateProduct: async (req, res) => {
         try {
-            const photo = req.file.filename
             const { id } = req.params
             const { name, brand, category_id, size, color, price, quantity, seller_id, description } = req.body;
             const productCheck = await getDetailProduct(id);
 
             if (productCheck.rowCount > 0) {
+                console.log('req-file: ', req.file);
+                const result = await cloudinary.uploader.upload(req.file.path)
+                const photo = result.secure_url;
+                const cloudinary_id = result.public_id
+                
                 const data = {
                     id,
                     name,
@@ -170,7 +181,8 @@ const productController = {
                     quantity,
                     seller_id,
                     photo,
-                    description
+                    description,
+                    cloudinary_id
                 }
                 await updateProduct(data)
                 success(res, {

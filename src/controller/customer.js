@@ -1,6 +1,7 @@
 const customerModel = require('../models/customer')
 const { success, failed } = require('../helper/common');
 const deleteFile = require('../helper/deleteFile');
+const cloudinary = require('../middlewares/cloudinary');
 
 const customerController = {
     getAllCustomers: async (req, res) => {
@@ -203,17 +204,23 @@ const customerController = {
 
     updatePhoto: async (req, res) => {
         try {
+            
             const { id } = req.params;
             let photo;
             if (req.file) {
+                // upload image to cloudinary
+                const result = await cloudinary.uploader.upload(req.file.path)
                 const usersCheck = await customerModel.getDetailCustomer(id);
-                if (usersCheck.rowCount > 0) {
-                    if (usersCheck.rows[0].photo == null) {
-                        photo = req.file.filename;
+                if (usersCheck.rowCount > 0) { 
+                    // if (usersCheck.rows[0].photo == null) {
+                        photo = result.secure_url;
+                        console.log('photo: ', photo);
                         const data = {
                             id,
                             photo,
+                            cloudinary_id: result.public_id,
                         };
+                        console.log('data: ', data);
                         await customerModel.updatePhoto(data);
                         const newData = await customerModel.getDetailCustomer(id);
                         success(res, {
@@ -222,22 +229,22 @@ const customerController = {
                             message: 'Success update worker photo',
                             data: newData.rows[0],
                         });
-                    } else {
-                        deleteFile(`public/${usersCheck.rows[0].photo}`);
-                        photo = req.file.filename;
-                        const data = {
-                            id,
-                            photo,
-                        };
-                        await customerModel.updatePhoto(data);
-                        const newData = await customerModel.getDetailCustomer(id);
-                        success(res, {
-                            code: 200,
-                            status: 'success',
-                            message: 'Success update worker photo',
-                            data: newData.rows[0],
-                        });
-                    }
+                    // } else {
+                    //     deleteFile(`upload/${usersCheck.rows[0].photo}`);
+                    //     photo = req.file.filename;
+                    //     const data = {
+                    //         id,
+                    //         photo,
+                    //     };
+                    //     await customerModel.updatePhoto(data);
+                    //     const newData = await customerModel.getDetailCustomer(id);
+                    //     success(res, {
+                    //         code: 200,
+                    //         status: 'success',
+                    //         message: 'Success update worker photo',
+                    //         data: newData.rows[0],
+                    //     });
+                    // }
                 } else {
                     deleteFile(`public/${req.file.filename}`);
                     failed(res, {

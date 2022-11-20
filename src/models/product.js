@@ -52,13 +52,16 @@ const insertProduct = (data) => {
             quantity,
             seller_id,
             photo,
-            description } = data
+            description,
+            cloudinary_id } = data
         Pool.query(`
         INSERT INTO product(id_product, name, brand, category_id, size, 
-        color, price, quantity, seller_id, photo, description)
+        color, price, quantity, seller_id, photo, description, cloudinary_id)
         VALUES ('${id}', '${name}', '${brand}', '${category_id}', '${size}',
-        '${color}', '${price}', ${quantity}, '${seller_id}', '${photo}', '${description}')`,
+        '${color}', '${price}', ${quantity}, '${seller_id}', '${photo}', '${description}', 
+        '${cloudinary_id}')`,
             (err, res) => {
+                console.log('err: ', err);
                 if (!err) {
                     resolve(res)
                 } else {
@@ -71,12 +74,26 @@ const insertProduct = (data) => {
 
 const updateProduct = (data) => {
     return new Promise((resolve, reject) => {
-        const { id, name, brand, category_id, size, color, price, quantity, seller_id, photo, description } = data
+        const { 
+            id, 
+            name, 
+            brand, 
+            category_id, 
+            size, 
+            color, 
+            price, 
+            quantity, 
+            seller_id, 
+            photo, 
+            description,
+            cloudinary_id } = data
         Pool.query(`
         UPDATE product SET name='${name}', brand='${brand}', category_id='${category_id}', size='${size}',
-        color='${color}', price=${price}, quantity=${quantity}, seller_id='${seller_id}', photo='${photo}', description='${description}'
+        color='${color}', price=${price}, quantity=${quantity}, seller_id='${seller_id}', photo='${photo}', 
+        description='${description}', cloudinary_id='${cloudinary_id}'
         WHERE id_product='${id}'`,
             (err, res) => {
+                console.log('err: ', err);
                 if (!err) {
                     resolve(res)
                 } else {

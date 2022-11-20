@@ -23,10 +23,10 @@ const getDetailCustomer = (id) => {
     return new Promise((resolve, reject) => {
         Pool.query(`
         SELECT customer.id_customer, customer.name, customer.email, customer.password,
-        customer.phone, customer.gender, customer.date_of_birth, customer.photo, customer.verify_token,
-        address.address, address.address2, address.address_label, address.address_label2, 
-        address.name_address, address.name_address2, address.phone_address, address.phone_address2,
-        address.postal_code, address.postal_code2, address.city, address.city2
+        customer.phone, customer.gender, customer.date_of_birth, customer.photo, customer.cloudinary_id,
+        customer.verify_token, address.address, address.address2, address.address_label, 
+        address.address_label2, address.name_address, address.name_address2, address.phone_address, 
+        address.phone_address2, address.postal_code, address.postal_code2, address.city, address.city2
         FROM customer 
         LEFT JOIN address ON customer.address_id = address.id_address
         WHERE id_customer='${id}'`,
@@ -90,9 +90,9 @@ const updateAddress = (data) => {
 
 
 const updatePhoto = (data) => {
-    const { id, photo } = data;
+    const { id, photo, cloudinary_id } = data;
     return new Promise((resolve, reject) => {
-        Pool.query(`UPDATE customer SET photo='${photo}' WHERE id_customer='${id}'`,
+        Pool.query(`UPDATE customer SET photo='${photo}', cloudinary_id='${cloudinary_id}' WHERE id_customer='${id}'`,
             (err, res) => {
                 if (err) {
                     reject(err);
