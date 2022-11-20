@@ -4,6 +4,8 @@
       {
         "src": "index.js",
         "use": "@now/node"
+      },{
+        "src": "/upload"
       }
     ],
     "routes": [
