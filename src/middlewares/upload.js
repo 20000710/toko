@@ -1,12 +1,12 @@
 const multer = require('multer');
 const path = require('path');
 const crypto = require('crypto');
-// const { failed } = require('../helper/common');
+const { failed } = require('../helper/common');
 // manajemen file
-module.exports = multer({
+const multerUpload = multer({
   storage: multer.diskStorage({
     destination: (req, file, cb) => {
-      cb(null, './');
+      cb(null, './upload');
     },
     filename: (req, file, cb) => {
       const ext = path.extname(file.originalname);
@@ -41,20 +41,20 @@ module.exports = multer({
 });
 
 // middleware
-// const upload = (req, res, next) => {
-//   const multerSingle = multerUpload.single('photo');
-//   multerSingle(req, res, (err) => {
-//     if (err) {
-//       failed(res, {
-//         code: 500,
-//         status: 'error',
-//         message: err.message,
-//         error: [],
-//       });
-//     } else {
-//       next();
-//     }
-//   });
-// };
+const upload = (req, res, next) => {
+  const multerSingle = multerUpload.single('photo');
+  multerSingle(req, res, (err) => {
+    if (err) {
+      failed(res, {
+        code: 500,
+        status: 'error',
+        message: err.message,
+        error: [],
+      });
+    } else {
+      next();
+    }
+  });
+};
 
-// module.exports = upload;
+module.exports = upload;
