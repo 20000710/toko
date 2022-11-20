@@ -36,3 +36,5 @@ const port = process.env.PORT;
 app.listen(3030, () => {
     console.log(`server running on http://${host}:${port}`)
 })
+
+module.exports = app
