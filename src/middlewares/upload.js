@@ -1,21 +1,8 @@
 const multer = require('multer');
-const path = require('path');
-const crypto = require('crypto');
 const { failed } = require('../helper/common');
 // manajemen file
 const multerUpload = multer({
-  storage: multer.diskStorage({
-    destination: (req, file, cb) => {
-      cb(null, './public');
-    },
-    filename: (req, file, cb) => {
-      const ext = path.extname(file.originalname);
-      const filename = `${crypto
-        .randomBytes(16)
-        .toString('hex')}${crypto.randomInt(99)}${ext}`;
-      cb(null, filename);
-    },
-  }),
+  storage: multer.diskStorage({}),
   fileFilter: (req, file, cb) => {
     const fileSize = parseInt(req.headers['content-length']);
     const maxSize = 2 * 1024 * 1024;

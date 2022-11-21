@@ -167,6 +167,7 @@ const productController = {
             if (productCheck.rowCount > 0) {
                 console.log('req-file: ', req.file);
                 const result = await cloudinary.uploader.upload(req.file.path)
+                
                 const photo = result.secure_url;
                 const cloudinary_id = result.public_id
                 
